@@ -1,11 +1,12 @@
 import os
 from pathlib import Path
 import numpy as np
-import SimpleITK
-import rawpy
-# import PIL as Image
 import matplotlib.pyplot as plt
 
+import SimpleITK
+
+# import rawpy
+# import PIL as Image
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
@@ -14,13 +15,11 @@ from torchvision import transforms, utils
 # https://github.com/cs230-stanford/cs230-code-examples/blob/master/pytorch/vision/model/data_loader.py
 
 
-
-
 class SSEchoDataset(Dataset):
     def __init__(self, dataset_path, TestTrain, ImQ=['Poor','Medium','Good'], Chambers=['2','4'], SysDia=['ES','ED'], transform=None):
 
         self.dataset_path = dataset_path + TestTrain + '/'
-        print(self.dataset_path)
+        # print(self.dataset_path)
         self.transform = transform
         
         patient_paths = Path(self.dataset_path).glob('patient*')
