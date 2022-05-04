@@ -108,14 +108,15 @@ def train(model, criterion, optimizer, scheduler, num_epochs):
 
 
 def val():
-
-
+    print("hello");
+    
 def test():
+    print("hello")
 
 
 
 
-if __name__ = '__main__':
+if __name__ == '__main__':
 
     train()
     val()
