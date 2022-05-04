@@ -19,7 +19,7 @@ learning_rate = 0.001
 step_size = .2
 gamma = .9
 
-dataset_path = '/Volumes/Seagate2/datasets/CAMUS/'
+dataset_path = 'Datasets/'
 
 dataset = SSEchoDataset(dataset_path, 'training', ImQ=['Poor','Medium','Good'], Chambers=['2','4'], SysDia=['ES','ED'], transform=transforms.Compose([ZeroPad((1200, 800)), ToTensor()]))
 test_dataset = SSEchoDataset(dataset_path, 'testing', ImQ=['Poor','Medium','Good'], Chambers=['2','4'], SysDia=['ES','ED'], transform=transforms.Compose([ZeroPad((1200, 800)), ToTensor()]))
@@ -115,10 +115,10 @@ def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=
 
 
 
-def val():
+#def val():
 
 
-def test():
+#def test():
 
 
 
