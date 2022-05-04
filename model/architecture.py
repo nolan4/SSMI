@@ -65,6 +65,9 @@ class UNet(nn.Module):
         #### define forward pass
     def forward(self, input):
 
+        input = input.unsqueeze(1)
+        print(input.size())
+
         x1 = F.relu(self.convA1(input))
         x2 = F.relu(self.convA2(x1))
         x3 = self.poolA1(x2)

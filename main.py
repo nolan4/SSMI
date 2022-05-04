@@ -73,21 +73,21 @@ def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=
         ts = time.time()
         losses = 0
 
-        for i, data in enumerate(train_loader, 0):
-            inputs, labels = data
+        for i, data  in enumerate(train_loader, 0):
 
-            print('inputs from train_loader:', inputs)
-            print('labels from train_loader:', labels)
-
+        
             # zero the parameter gradients
             optimizer.zero_grad()
 
             if use_gpu:
-                inputs = X.cuda()
-                labels = Y.cuda()
+                inputs = data['scan'].cuda()
+                labels = data['gt'].cuda()
             else:
-                inputs, labels = X, Y
+                inputs, labels = data['scan'], data['gt']
 
+
+            #zero the parameter gradients
+            optimizer.zero_grad()
             # forward + backward + optimize
             outputs = UNet(inputs)
             loss = criterion(outputs, labels.long())
@@ -96,8 +96,9 @@ def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=
 
             losses += loss
 
-            if iter % 100 == 0:
+            if iter % 2000 == 1:
                 print("epoch{}, iter{}, loss: {}".format(epoch, iter, loss.item()))
+                losses = 0.0
         
         average_loss = losses / len(train_loader)
         losses_list.append(avergae_loss)
