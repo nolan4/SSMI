@@ -1,12 +1,17 @@
-from tkinter import Y
-from model.Unet.py import *
+import time
+import copy
+
+from model.data_loader import *
+from model.architecture import *
 
 
 # https://github.com/cs230-stanford/cs230-code-examples/blob/master/pytorch/vision/model/net.py
 
+num_class = 4
+num_epochs = 10
 
 batch_size = 4
-num_workers = 2
+num_workers = 1
 epochs = 50  
 learning_rate = 0.001
 
@@ -32,31 +37,31 @@ test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, s
 
 # use xavier weight initialization
 # def init_weights(m):
-#     if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d)
-#     torch.nn.init.xavier_uniform_(m.weight.data)
-#     torch.nn.init_zeros(m.bias.data)
+#     if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+#         nn.init.xavier_uniform_(m.weight.data)
+#         nn.init_zeros(m.bias.data)
 
 
 # initialize the model
-unet_model = Unet(n_class=n_class)
-unet_model.apply(init_weights)
+unet_model = UNet(num_class=num_class)
+# unet_model.apply(init_weights)
 
 # check for GPU
-use_gpu = torch.cudea.is_available()
+use_gpu = torch.cuda.is_available()
 if use_gpu:
     print('Using GPU...')
     unet_model = unet_model.cuda()
 
 # define criterion/optimizer/scheduler
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(Unet.parameters(), lr=learning_rate)
+optimizer = optim.Adam(unet_model.parameters(), lr=learning_rate)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=gamma)
 
 
 
 #######
 
-def train(model, criterion, optimizer, scheduler, num_epochs):
+def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=scheduler, num_epochs=num_epochs):
 
     since = time.time()
 
@@ -71,6 +76,9 @@ def train(model, criterion, optimizer, scheduler, num_epochs):
         for i, data in enumerate(train_loader, 0):
             inputs, labels = data
 
+            print('inputs from train_loader:', inputs)
+            print('labels from train_loader:', labels)
+
             # zero the parameter gradients
             optimizer.zero_grad()
 
@@ -81,7 +89,7 @@ def train(model, criterion, optimizer, scheduler, num_epochs):
                 inputs, labels = X, Y
 
             # forward + backward + optimize
-            outputs = Unet(inputs)
+            outputs = UNet(inputs)
             loss = criterion(outputs, labels.long())
             loss.backward()
             optimizer.step()
@@ -108,10 +116,9 @@ def train(model, criterion, optimizer, scheduler, num_epochs):
 
 
 def val():
-    print("hello");
-    
+
+
 def test():
-    print("hello")
 
 
 
@@ -119,5 +126,5 @@ def test():
 if __name__ == '__main__':
 
     train()
-    val()
-    test()
+    # val()
+    # test()
