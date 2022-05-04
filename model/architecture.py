@@ -66,15 +66,23 @@ class UNet(nn.Module):
     def forward(self, input):
 
         input = input.unsqueeze(1)
-        print(input.size())
+        print('input size:', input.size())
+        print('input type:', type(input))
+        print('input data type:', input.dtype)
 
         x1 = F.relu(self.convA1(input))
+        print('x1', x1.size())
         x2 = F.relu(self.convA2(x1))
+        print('x2', x2.size())
         x3 = self.poolA1(x2)
+        print('x3', x3.size())
 
         x4 = F.relu(self.convB1(x3))
+        print('x4', x4.size())
         x5 = F.relu(self.convB2(x4))
+        print('x5', x5.size())
         x6 = self.poolB1(x5)
+        print('x6', x6.size())
 
         x7 = F.relu(self.convC1(x6))
         x8 = F.relu(self.convC2(x7))
@@ -113,9 +121,9 @@ class UNet(nn.Module):
         x26 = F.relu(self.convA4(x25))
         x27 = self.upconvA1(x26)
 
-        output = self.linear(x27)
+        outputs = self.linear(x27)
 
-        return output
+        return outputs
 
 
 

@@ -63,56 +63,78 @@ scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=gamm
 
 def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=scheduler, num_epochs=num_epochs):
 
-    since = time.time()
+    # since = time.time()
 
-    best_model_wts = copy.deepcopy(model.state_dict())
-    best_acc = 0.0
+    # best_model_wts = copy.deepcopy(model.state_dict())
+    # best_acc = 0.0
 
-    for epoch in range(epochs):
+    for epoch in range(2):  # loop over the dataset multiple times
 
-        ts = time.time()
-        losses = 0
+        running_loss = 0.0
+        for i, data in enumerate(train_loader, 0):
+            # get the inputs; data is a list of [inputs, labels]
+            # print(data['scan'].size())
+            inputs = data['scan']
+            targets = data['gt']
 
-        for i, data  in enumerate(train_loader, 0):
+            print('scan', data['scan'].size())
+            print('gt', data['gt'].size())
 
-        
+            print('inputs from train_loader:', inputs)
+            print('labels from train_loader:', labels)
+
             # zero the parameter gradients
             optimizer.zero_grad()
 
             if use_gpu:
-                inputs = data['scan'].cuda()
-                labels = data['gt'].cuda()
+                inputs = X.cuda()
+                labels = Y.cuda()
             else:
-                inputs, labels = data['scan'], data['gt']
+                inputs, labels = X, Y
 
-
-            #zero the parameter gradients
-            optimizer.zero_grad()
             # forward + backward + optimize
-            outputs = UNet(inputs)
-            loss = criterion(outputs, labels.long())
+            outputs = unet_model(inputs)
+            loss = criterion(outputs, targets)
             loss.backward()
             optimizer.step()
 
-            losses += loss
+            # print statistics
+            running_loss += loss.item()
+            if i % 2000 == 1999:    # print every 2000 mini-batches
+                print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
+                running_loss = 0.0
 
-            if iter % 2000 == 1:
+    print('Finished Training')
+
+    # for epoch in range(epochs):
+
+    #     ts = time.time()
+    #     losses = 0
+
+    #     for i, data in enumerate(train_loader, 0):
+    #         inputs_, labels_ = data
+
+    #         print()
+
+    #         # print('inputs from train_loader:', inputs)
+    #         # print('labels from train_loader:', labels)
+
+            if iter % 100 == 0:
                 print("epoch{}, iter{}, loss: {}".format(epoch, iter, loss.item()))
-                losses = 0.0
         
-        average_loss = losses / len(train_loader)
-        losses_list.append(avergae_loss)
-        print("Finish epoch {}, time elapsed {}".format(epoch, time.time() - ts))
-        print(f"Average Loss: {average_loss}")
+    #     average_loss = losses / len(train_loader)
+    #     losses_list.append(average_loss)
+    #     print("Finish epoch {}, time elapsed {}".format(epoch, time.time() - ts))
+    #     print(f"Average Loss: {average_loss}")
 
-        # early stopping
-        val_loss, _, val_ious = val(epoch)
-        val_losses_list.append(val_loss)
-        if val_loss < min_val_loss:
-            min_val_loss = val_loss
-            torch.save(net, 'best_model')
+    #     # early stopping
+    #     val_loss, _, val_ious = val(epoch)
+    #     val_losses_list.append(val_loss)
+    #     if val_loss < min_val_loss:
+    #         min_val_loss = val_loss
+    #         torch.save(net, 'best_model')
 
-        Unet.train()
+    #     Unet.train()
 
 
 
