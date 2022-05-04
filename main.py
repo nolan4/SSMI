@@ -119,8 +119,8 @@ def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=
     #         # print('inputs from train_loader:', inputs)
     #         # print('labels from train_loader:', labels)
 
-            if iter % 100 == 0:
-                print("epoch{}, iter{}, loss: {}".format(epoch, iter, loss.item()))
+    #        if iter % 100 == 0:
+    #            print("epoch{}, iter{}, loss: {}".format(epoch, iter, loss.item()))
         
     #     average_loss = losses / len(train_loader)
     #     losses_list.append(average_loss)
