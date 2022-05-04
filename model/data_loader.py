@@ -18,6 +18,8 @@ from torchvision import transforms, utils
 class SSEchoDataset(Dataset):
     def __init__(self, dataset_path, TestTrain, ImQ=['Poor','Medium','Good'], Chambers=['2','4'], SysDia=['ES','ED'], transform=None):
 
+        print('calling SSECHODataset class ...')
+
         self.dataset_path = dataset_path + TestTrain + '/'
         # print(self.dataset_path)
         self.transform = transform
@@ -36,6 +38,7 @@ class SSEchoDataset(Dataset):
         # iterate through patient data
         for i,f in enumerate(patient_paths):
             patient_id = str(f)[-11:]
+            # print(patient_id)
             
             # include scans with 'c' chamber view 
             for c in Chambers:
@@ -142,5 +145,5 @@ class ToTensor(object):
     def __call__(self, sample):
         scan, gt = sample['scan'], sample['gt']
 
-        return {'scan': torch.from_numpy(scan),
-                'gt': torch.from_numpy(gt)}
+        return {'scan': torch.from_numpy(scan.astype(np.double)),
+                'gt': torch.from_numpy(gt.astype(np.double))}
