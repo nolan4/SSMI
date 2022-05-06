@@ -80,17 +80,10 @@ def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=
             print('scan', data['scan'].size())
             print('gt', data['gt'].size())
 
-            print('inputs from train_loader:', inputs)
-            print('labels from train_loader:', labels)
 
             # zero the parameter gradients
             optimizer.zero_grad()
 
-            if use_gpu:
-                inputs = X.cuda()
-                labels = Y.cuda()
-            else:
-                inputs, labels = X, Y
 
             # forward + backward + optimize
             outputs = unet_model(inputs)

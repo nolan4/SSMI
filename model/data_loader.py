@@ -145,5 +145,5 @@ class ToTensor(object):
     def __call__(self, sample):
         scan, gt = sample['scan'], sample['gt']
 
-        return {'scan': torch.from_numpy(scan.astype(np.double)),
-                'gt': torch.from_numpy(gt.astype(np.double))}
+        return {'scan': torch.from_numpy(scan.astype(np.float32)),
+                'gt': torch.from_numpy(gt.astype(np.float32))}

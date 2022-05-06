@@ -2,7 +2,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
-
+import torchvision
 class UNet(nn.Module):
 
     # maybe include batch normalization??
@@ -31,7 +31,7 @@ class UNet(nn.Module):
 
         self.poolC1 = nn.MaxPool2d(2)
 
-        self.convD1 = nn.Conv2d(128, 512, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
+        self.convD1 = nn.Conv2d(256, 512, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
         self.convD2 = nn.Conv2d(512, 512, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
 
         self.poolD1 = nn.MaxPool2d(2)
@@ -39,22 +39,22 @@ class UNet(nn.Module):
         self.convE1 = nn.Conv2d(512, 1024, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
         self.convE2 = nn.Conv2d(1024, 1024, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
 
-        self.upconvD1 = nn.ConvTranspose2d(1024, 512, 2, stride=1, padding=0, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros')
+        self.upconvE1 = nn.ConvTranspose2d(1024, 512, 2, stride=1, padding=0, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros')
 
         self.convD3 = nn.Conv2d(1024, 512, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
         self.convD4 = nn.Conv2d(512, 512, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
 
-        self.upconvC1 = nn.ConvTranspose2d(512, 256, 2, stride=1, padding=0, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros')
+        self.upconvD1 = nn.ConvTranspose2d(512, 256, 2, stride=1, padding=0, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros')
 
         self.convC3 = nn.Conv2d(512, 256, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
         self.convC4 = nn.Conv2d(256, 256, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
 
-        self.upconvB1 = nn.ConvTranspose2d(256, 128, 2, stride=1, padding=0, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros')
+        self.upconvC1 = nn.ConvTranspose2d(256, 128, 2, stride=1, padding=0, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros')
 
         self.convB3 = nn.Conv2d(256, 128, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
         self.convB4 = nn.Conv2d(128, 128, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
 
-        self.upconvA1 = nn.ConvTranspose2d(128, 64, 2, stride=1, padding=0, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros')
+        self.upconvB1 = nn.ConvTranspose2d(128, 64, 2, stride=1, padding=0, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros')
 
         self.convA3 = nn.Conv2d(128, 64, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
         self.convA4 = nn.Conv2d(64, 64, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
@@ -86,28 +86,40 @@ class UNet(nn.Module):
 
         x7 = F.relu(self.convC1(x6))
         x8 = F.relu(self.convC2(x7))
+        print("x8")
+        print(x8.shape)
         x9 = self.poolC1(x8)
-
-        x10 = F.relu(self.convD1(x3))
-        x11 = F.relu(self.convD2(x4))
-        x12 = self.poolD1(x5)
+        print("x9")
+        print(x9.shape)
+        x10 = F.relu(self.convD1(x9))
+        x11 = F.relu(self.convD2(x10))
+        x12 = self.poolD1(x11)
 
         # now at bottom of U
         # torch.cat(tensors, dim=0, *, out=None)
         # (will need to fix concatination dimensions in torch.cat)
+        print("x11")
+        print(x11.shape)
 
+        x13 = F.relu(self.convE1(x12))
+        x14 = F.relu(self.convE2(x13))
+        x15 = self.upconvE1(x14)
 
-        x13 = F.relu(self.convD3(x12))
-        x14 = F.relu(self.convD4(x13))
-        x15 = self.upconvD1(x14)
-
-        x15x11 = torch.cat(x15, torch.copy(x11))
-        x16 = F.relu(self.convC3(x15x11))
+        print("x15")
+        print(x15.shape)
+        transform = torchvision.transforms.CenterCrop((68,43))
+        x11crop = transform(x11)
+        torch.cat((x15,x11crop)) 
+        x16 = F.relu(self.convC3(x15)
         x17 = F.relu(self.convC4(x16))
         x18 = self.upconvC1(x17)
 
-        x18x8 = torch.cat(x18, torch.copy(x8))
-        x19 = F.relu(self.convB3(x18x8))
+
+
+        transform = torchvision.transforms.CenterCrop((68,43))
+        x8crop = transform(x8)
+        torch.cat((x18,x8crop)) 
+        x19 = F.relu(self.convB3(x18))
         x20 = F.relu(self.convB4(x19))
         x21 = self.upconvB1(x20)
 
