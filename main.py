@@ -1,6 +1,8 @@
 import time
 import copy
 
+from torch._C import *
+
 from model.data_loader import *
 from model.architecture import *
 
@@ -12,7 +14,7 @@ num_epochs = 10
 
 batch_size = 4
 num_workers = 1
-epochs = 50  
+epochs = 50     
 learning_rate = 0.001
 
 # scheduler param
@@ -21,8 +23,8 @@ gamma = .9
 
 dataset_path = 'Datasets/'
 
-dataset = SSEchoDataset(dataset_path, 'training', ImQ=['Poor','Medium','Good'], Chambers=['2','4'], SysDia=['ES','ED'], transform=transforms.Compose([ZeroPad((1200, 800)), ToTensor()]))
-test_dataset = SSEchoDataset(dataset_path, 'testing', ImQ=['Poor','Medium','Good'], Chambers=['2','4'], SysDia=['ES','ED'], transform=transforms.Compose([ZeroPad((1200, 800)), ToTensor()]))
+dataset = SSEchoDataset(dataset_path, 'training', ImQ=['Poor','Medium','Good'], Chambers=['2','4'], SysDia=['ES','ED'], transform=transforms.Compose([ZeroPad((1500, 1100)), ToTensor()]))
+test_dataset = SSEchoDataset(dataset_path, 'testing', ImQ=['Poor','Medium','Good'], Chambers=['2','4'], SysDia=['ES','ED'], transform=transforms.Compose([ZeroPad((1500, 1100)), ToTensor()]))
 
 train_size = int(.9*len(dataset))
 val_size = len(dataset) - train_size
@@ -75,7 +77,7 @@ def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=
             # get the inputs; data is a list of [inputs, labels]
             # print(data['scan'].size())
             inputs = data['scan']
-            targets = data['gt']
+            targets = data['gt'].long()
 
             print('scan', data['scan'].size())
             print('gt', data['gt'].size())
@@ -87,6 +89,14 @@ def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=
 
             # forward + backward + optimize
             outputs = unet_model(inputs)
+            print(outputs.type())
+            print(outputs[1].type())
+            
+            print('outputs: \n')
+            print(outputs)
+            
+            print('targets: \n')
+            print(targets.size())
             loss = criterion(outputs, targets)
             loss.backward()
             optimizer.step()

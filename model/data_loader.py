@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import SimpleITK
+from regex import W
 
 # import rawpy
 # import PIL as Image
@@ -21,11 +22,10 @@ class SSEchoDataset(Dataset):
         print('calling SSECHODataset class ...')
 
         self.dataset_path = dataset_path + TestTrain + '/'
-        # print(self.dataset_path)
         self.transform = transform
         
         patient_paths = Path(self.dataset_path).glob('patient*')
-        self.data_paths = self.process_paths(patient_paths, TestTrain, ImQ=ImQ, Chambers=Chambers, SysDia=SysDia)
+        self.data_paths = self.process_paths(patient_paths, TestTrain, ImQ, Chambers, SysDia)
 
 
     def __len__(self):
@@ -115,6 +115,7 @@ class ZeroPad(object):
         if isinstance(self.output_size, int):
             
             if self.output_size < h or self.output_size < w:
+                print(self.output_size, (h,w))
                 raise Exception('one or both of scan/gt dimensions are larger than self.output_size')
             
             pad_right = int(self.output_size - w)
@@ -123,6 +124,7 @@ class ZeroPad(object):
         else:
             
             if self.output_size[0] < h or self.output_size[1] < w:
+                print(self.output_size, (h,w))
                 raise Exception('one or both of scan/gt dimensions are larger than self.output_size')
             
             pad_right = int(self.output_size[1] - w)
