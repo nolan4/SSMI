@@ -69,7 +69,7 @@ class UNet(nn.Module):
         #### define forward pass
     def forward(self, input):
 
-        input = input.unsqueeze(1)
+        # input = input.unsqueeze(1)
         print('input size:', input.size())
         print('input type:', type(input))
         print('input data type:', input.dtype)
@@ -179,9 +179,13 @@ class UNet(nn.Module):
         # outputs = self.linear(x26)
         # print('outputs', outputs.size())
         outputs = self.convA5(x26)
-        print('outputs', outputs.size())
 
-        return outputs
+        outputs_final = F.interpolate(outputs, input.size()[2:])
+
+        print('outputs', outputs.size())
+        print('outputs_final', outputs_final.size())
+
+        return outputs_final
 
 
 

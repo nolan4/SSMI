@@ -147,5 +147,17 @@ class ToTensor(object):
     def __call__(self, sample):
         scan, gt = sample['scan'], sample['gt']
 
-        return {'scan': torch.from_numpy(scan.astype(np.float32)),
-                'gt': torch.from_numpy(gt.astype(np.float32))}
+        # ch0 = np.zeros_like(gt)[gt == 0] = 1
+        # ch1 = np.zeros_like(gt)[gt == 1] = 1
+        # ch2 = np.zeros_like(gt)[gt == 2] = 1
+        # ch3 = np.zeros_like(gt)[gt == 3] = 1
+
+        # out = torch.cat(ch0, ch1, ch2, ch3)
+        # print(np.shape(out))
+
+        # convert ground truth [1, 1, height, width] to [1, 4, height, width]
+
+
+        return {'scan': torch.from_numpy(scan.astype(np.float32)).unsqueeze(0),
+                  'gt': torch.from_numpy(gt.astype(np.float32))}
+                # 'gt': torch.from_numpy(gt.astype(np.float32)).unsqueeze(0)}
