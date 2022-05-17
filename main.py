@@ -1,6 +1,8 @@
 import time
 import copy
 
+from torch._C import *
+
 from model.data_loader import *
 from model.architecture import *
 
@@ -12,7 +14,7 @@ num_epochs = 10
 
 batch_size = 4
 num_workers = 1
-epochs = 50  
+epochs = 50     
 learning_rate = 0.001
 
 # scheduler param
@@ -75,7 +77,7 @@ def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=
             # get the inputs; data is a list of [inputs, labels]
             # print(data['scan'].size())
             inputs = data['scan']
-            targets = data['gt']
+            targets = data['gt'].long()
 
             print('scan', data['scan'].size())
             print('gt', data['gt'].size())
@@ -83,8 +85,17 @@ def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=
             # zero the parameter gradients
             optimizer.zero_grad()
 
+
             # forward + backward + optimize
             outputs = unet_model(inputs)
+            print(outputs.type())
+            print(outputs[1].type())
+            
+            print('outputs: \n')
+            print(outputs)
+            
+            print('targets: \n')
+            print(targets.size())
             loss = criterion(outputs, targets)
             loss.backward()
             optimizer.step()
@@ -110,27 +121,8 @@ def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=
     #         # print('inputs from train_loader:', inputs)
     #         # print('labels from train_loader:', labels)
 
-    #         # zero the parameter gradients
-    #         optimizer.zero_grad()
-
-    #         if use_gpu:
-    #             inputs = inputs_.cuda()
-    #             labels = labels_.cuda()
-    #         else:
-    #             inputs = inputs_
-    #             labels = labels_
-
-
-    #         # forward + backward + optimize
-    #         outputs = UNet(inputs)
-    #         loss = criterion(outputs, labels.long())
-    #         loss.backward()
-    #         optimizer.step()
-
-    #         losses += loss
-
-    #         if iter % 100 == 0:
-    #             print("epoch{}, iter{}, loss: {}".format(epoch, iter, loss.item()))
+    #        if iter % 100 == 0:
+    #            print("epoch{}, iter{}, loss: {}".format(epoch, iter, loss.item()))
         
     #     average_loss = losses / len(train_loader)
     #     losses_list.append(average_loss)

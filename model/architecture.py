@@ -39,17 +39,22 @@ class UNet(nn.Module):
         self.convE2 = nn.Conv2d(1024, 1024, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
         self.upconvE1 = nn.ConvTranspose2d(1024, 512, 2, stride=1, padding=1, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros')
 
+
         self.convD3 = nn.Conv2d(1024, 512, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
         self.convD4 = nn.Conv2d(512, 512, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
         self.upconvD1 = nn.ConvTranspose2d(512, 256, 2, stride=1, padding=1, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros')
+
 
         self.convC3 = nn.Conv2d(512, 256, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
         self.convC4 = nn.Conv2d(256, 256, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
         self.upconvC1 = nn.ConvTranspose2d(256, 128, 2, stride=1, padding=1, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros')
 
+
         self.convB3 = nn.Conv2d(256, 128, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
         self.convB4 = nn.Conv2d(128, 128, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
         self.upconvB1 = nn.ConvTranspose2d(128, 64, 2, stride=1, padding=1, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros')
+
+        self.upconvA1 = nn.ConvTranspose2d(128, 64, 2, stride=1, padding=0, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros')
 
         self.convA3 = nn.Conv2d(128, 64, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
         self.convA4 = nn.Conv2d(64, 64, 3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
@@ -92,7 +97,14 @@ class UNet(nn.Module):
 
         x7 = F.relu(self.convC1(x6))
         x8 = F.relu(self.convC2(x7))
+        print("x8")
+        print(x8.shape)
         x9 = self.poolC1(x8)
+        print("x9")
+        print(x9.shape)
+        x10 = F.relu(self.convD1(x9))
+        x11 = F.relu(self.convD2(x10))
+        x12 = self.poolD1(x11)
 
         # print('x7', x7.size())
         print('x8', x8.size())
@@ -169,7 +181,9 @@ class UNet(nn.Module):
 
         # x24x2 = torch.cat((x24, self.tensorCenterCrop(x2.clone().detach(), x24)), 1)
         # x24x2_interped = F.interpolate(x24x2, x2.size()[:2])
+        print('x2size interpolation',x2.size()[2:] )
         x24x2_interped = torch.cat((x2, F.interpolate(x24, x2.size()[2:])), 1)
+        print('x24_x2', x24x2_interped.size())
         x25 = F.relu(self.convA3(x24x2_interped))
         x26 = F.relu(self.convA4(x25))
 
