@@ -5,6 +5,7 @@ from torch._C import *
 
 from model.data_loader import *
 from model.architecture import *
+from model.unet_fcn import *
 
 
 # https://github.com/cs230-stanford/cs230-code-examples/blob/master/pytorch/vision/model/net.py
@@ -23,8 +24,10 @@ gamma = .9
 
 dataset_path = '/Volumes/Seagate2/datasets/CAMUS/'
 
-dataset = SSEchoDataset(dataset_path, 'training', ImQ=['Poor','Medium','Good'], Chambers=['2','4'], SysDia=['ES','ED'], transform=transforms.Compose([ZeroPad((1400, 1000)), ToTensor()]))
-test_dataset = SSEchoDataset(dataset_path, 'testing', ImQ=['Poor','Medium','Good'], Chambers=['2','4'], SysDia=['ES','ED'], transform=transforms.Compose([ZeroPad((1400, 1000)), ToTensor()]))
+# dataset = SSEchoDataset(dataset_path, 'training', ImQ=['Poor','Medium','Good'], Chambers=['2','4'], SysDia=['ES','ED'], transform=transforms.Compose([ZeroPad((1500, 1100)), ToTensor()]))
+# test_dataset = SSEchoDataset(dataset_path, 'testing', ImQ=['Poor','Medium','Good'], Chambers=['2','4'], SysDia=['ES','ED'], transform=transforms.Compose([ZeroPad((1500, 1100)), ToTensor()]))
+dataset = SSEchoDataset(dataset_path, 'training', ImQ=['Poor','Medium','Good'], Chambers=['2','4'], SysDia=['ES','ED'])
+test_dataset = SSEchoDataset(dataset_path, 'testing', ImQ=['Poor','Medium','Good'], Chambers=['2','4'], SysDia=['ES','ED'])
 
 train_size = int(.9*len(dataset))
 val_size = len(dataset) - train_size
@@ -37,16 +40,17 @@ test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, s
 ######## data is good to go at this point
 
 
-# use xavier weight initialization
-# def init_weights(m):
-#     if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
-#         nn.init.xavier_uniform_(m.weight.data)
-#         nn.init_zeros(m.bias.data)
+def init_weights(m):
+    if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+        torch.nn.init.xavier_uniform_(m.weight.data)
+        # torch.nn.init.xavier_uniform(m.bias.data)        
+        torch.nn.init.zeros_(m.bias.data)    
 
 
 # initialize the model
-unet_model = UNet(num_class=num_class)
-# unet_model.apply(init_weights)
+# unet_model = UNet(num_class=num_class)
+unet_model = FCN(num_class=num_class)
+unet_model.apply(init_weights)
 
 # check for GPU
 use_gpu = torch.cuda.is_available()
@@ -60,7 +64,6 @@ optimizer = optim.Adam(unet_model.parameters(), lr=learning_rate)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=gamma)
 
 
-
 #######
 
 def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=scheduler, num_epochs=num_epochs):
@@ -70,41 +73,51 @@ def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=
     # best_model_wts = copy.deepcopy(model.state_dict())
     # best_acc = 0.0
 
+    min_val_loss = np.finfo(np.float32()).max
+    losses_list = []
+    val_losses_list = []
+
     for epoch in range(2):  # loop over the dataset multiple times
 
         running_loss = 0.0
-        for i, data in enumerate(train_loader, 0):
+        for iter, data in enumerate(train_loader):
             # get the inputs; data is a list of [inputs, labels]
             # print(data['scan'].size())
-            inputs = data['scan']
-            targets = data['gt'].long()
+            X = data['scan']
+            Y = data['gt']
+            YM = data['gt_masks']
 
-            print('scan', data['scan'].size())
-            print('gt', data['gt'].size())
+            print('scan', X.size())
+            print('gt', Y.size())
+            print('gt_masks', YM.size())
 
             # zero the parameter gradients
             optimizer.zero_grad()
 
+            if use_gpu:
+                inputs = X.cuda()
+                gt = Y.cuda()
+            else:
+                inputs, gt = X, Y
+
 
             # forward + backward + optimize
             outputs = unet_model(inputs)
-            print(outputs.type())
-            print(outputs[1].type())
             
             print('outputs: \n')
-            print(outputs)
+            print(outputs.shape)
             
-            print('targets: \n')
-            print(targets.size())
-            loss = criterion(outputs, targets)
+            print('gt: \n')
+            print(gt.shape)
+
+            loss = criterion(outputs, gt.long())
             loss.backward()
             optimizer.step()
 
             # print statistics
             running_loss += loss.item()
-            if i % 2000 == 1999:    # print every 2000 mini-batches
-                print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
-                running_loss = 0.0
+            if iter % 100 == 0:
+                print("epoch{}, iter{}, loss: {}".format(epoch, iter, loss.item()))
 
     print('Finished Training')
 

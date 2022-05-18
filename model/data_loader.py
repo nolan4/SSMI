@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from sqlite3 import SQLITE_CREATE_TEMP_TABLE
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -11,9 +12,31 @@ from regex import W
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
+from collections import namedtuple
+
 
 # https://pytorch.org/tutorials/beginner/data_loading_tutorial.html
 # https://github.com/cs230-stanford/cs230-code-examples/blob/master/pytorch/vision/model/data_loader.py
+
+
+
+n_class = 4
+
+# a label and all meta information
+Label = namedtuple( 'Label' , [
+    'name'        , 
+    'level3Id'    , 
+    'color'       , 
+    ] )
+
+label_mappings = [
+    #       name                     level3Id  color
+    Label(  'background'        ,    0  , (128, 64,128)  ),
+    Label(  'left ventricle'    ,    1  , ( 81,  0, 81)  ),
+    Label(  'myocardium'        ,    2  , (244, 35,232)  ),
+    Label(  'left atrium'       ,    3  , (152,251,152)  ),
+]
+
 
 
 class SSEchoDataset(Dataset):
@@ -21,12 +44,13 @@ class SSEchoDataset(Dataset):
 
         print('calling SSECHODataset class ...')
 
+        self.n_class = 4
+
         self.dataset_path = dataset_path + TestTrain + '/'
-        self.transform = transform
+        self.transform = transforms.Compose([ZeroPad((1500, 1100)), ToTensor()])
         
         patient_paths = Path(self.dataset_path).glob('patient*')
         self.data_paths = self.process_paths(patient_paths, TestTrain, ImQ, Chambers, SysDia)
-
 
     def __len__(self):
         return len(self.data_paths)
@@ -75,7 +99,7 @@ class SSEchoDataset(Dataset):
         return out_paths
 
         
-    # this is for training data ONLY
+    # this occurs each time a data sample is taken
     def __getitem__(self, idx):
         
         if torch.is_tensor(idx):
@@ -91,7 +115,17 @@ class SSEchoDataset(Dataset):
         
         if self.transform:
             sample = self.transform(sample)
-    
+
+
+        # convert ground truth into one-hot encoded vectors
+        gt = sample['gt']
+        h, w = gt.shape
+        gt_masks = torch.zeros(self.n_class, h, w)
+        for c in range(self.n_class):
+            gt_masks[c][gt == c] = 1
+
+        sample['gt_masks'] = gt_masks
+            
         return sample
 
 
@@ -156,6 +190,9 @@ class ToTensor(object):
         # print(np.shape(out))
 
         # convert ground truth [1, 1, height, width] to [1, 4, height, width]
+
+        # zero out non LV pixels
+
 
 
         return {'scan': torch.from_numpy(scan.astype(np.float32)).unsqueeze(0),
