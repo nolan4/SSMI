@@ -13,14 +13,13 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 from collections import namedtuple
+import torch.nn.functional as F
 
 
 # https://pytorch.org/tutorials/beginner/data_loading_tutorial.html
 # https://github.com/cs230-stanford/cs230-code-examples/blob/master/pytorch/vision/model/data_loader.py
 
 
-
-n_class = 4
 
 # a label and all meta information
 Label = namedtuple( 'Label' , [
@@ -44,17 +43,15 @@ class SSEchoDataset(Dataset):
 
         print('calling SSECHODataset class ...')
 
-        self.n_class = 4
-
+        self.num_class = 4
         self.dataset_path = dataset_path + TestTrain + '/'
-        self.transform = transforms.Compose([ZeroPad((1500, 1100)), ToTensor()])
+        self.transform = transforms.Compose([ZPCC((300, 200)), ToTensor()])
         
         patient_paths = Path(self.dataset_path).glob('patient*')
         self.data_paths = self.process_paths(patient_paths, TestTrain, ImQ, Chambers, SysDia)
 
     def __len__(self):
         return len(self.data_paths)
-    
     
     def process_paths(self, patient_paths, TestTrain, ImQ, Chambers, SysDia):
         
@@ -113,27 +110,27 @@ class SSEchoDataset(Dataset):
                 
         sample = {'scan': scan, 'gt': gt}
         
+        # perform predefined transformations on scan and gt
         if self.transform:
             sample = self.transform(sample)
-
 
         # convert ground truth into one-hot encoded vectors
         gt = sample['gt']
         h, w = gt.shape
-        gt_masks = torch.zeros(self.n_class, h, w)
-        for c in range(self.n_class):
+        gt_masks = torch.zeros(self.num_class, h, w)
+        for c in range(self.num_class):
             gt_masks[c][gt == c] = 1
 
         sample['gt_masks'] = gt_masks
-            
+
         return sample
 
 
 # for ensuring all training images are the same dimension
-class ZeroPad(object):
+class ZPCC(object):
     
     """ 
-    Zero pad scans so that they are all of the same dimension
+    Zero pad then center crop (ZPCC) scans so that they are all of the same dimension
     """
 
     def __init__(self, output_size):
@@ -141,36 +138,24 @@ class ZeroPad(object):
         self.output_size = output_size
         
     def __call__(self, sample):
-        scan, gt = sample['scan'], sample['gt']
-        
-        h, w = scan.shape[:2]
-        
-        # if given an int for output dims
-        if isinstance(self.output_size, int):
-            
-            if self.output_size < h or self.output_size < w:
-                print(self.output_size, (h,w))
-                raise Exception('one or both of scan/gt dimensions are larger than self.output_size')
-            
-            pad_right = int(self.output_size - w)
-            pad_bottom = int(self.output_size - h)
-                
-        else:
-            
-            if self.output_size[0] < h or self.output_size[1] < w:
-                print(self.output_size, (h,w))
-                raise Exception('one or both of scan/gt dimensions are larger than self.output_size')
-            
-            pad_right = int(self.output_size[1] - w)
-            pad_bottom = int(self.output_size[0] - h)
-            
-        
-        pad_scan = np.vstack([np.hstack([scan, np.zeros((h, pad_right))]),  np.zeros((pad_bottom, w+pad_right))])
-#         print('scan_pad', np.shape(pad_scan))
-        pad_gt = np.vstack([np.hstack([gt, np.zeros((h, pad_right))]),  np.zeros((pad_bottom, w+pad_right))])
-#         print('gt_pad', np.shape(pad_gt))
 
-        return {'scan': pad_scan, 'gt': pad_gt}
+        if isinstance(self.output_size, int):
+            self.output_size = (self.output_size, self.output_size)
+
+        scan, gt = sample['scan'], sample['gt']
+
+        h, w = scan.shape[:2]
+        pad_scan = np.pad(scan, max(max(self.output_size[0]-h,self.output_size[1]-w)+1, 0)//2)
+        pad_gt = np.pad(gt, max(max(self.output_size[0]-h,self.output_size[1]-w)+1, 0)//2)
+
+        h, w = pad_scan.shape[:2]
+        starth = h // 2 - (self.output_size[0] // 2)
+        startw = w // 2 - (self.output_size[1] // 2)
+
+        CC_scan = pad_scan[starth:starth + self.output_size[0], startw:startw + self.output_size[1]]
+        CC_gt = pad_gt[starth:starth + self.output_size[0], startw:startw + self.output_size[1]]
+
+        return {'scan': CC_scan, 'gt': CC_gt}
     
     
     
@@ -181,20 +166,5 @@ class ToTensor(object):
     def __call__(self, sample):
         scan, gt = sample['scan'], sample['gt']
 
-        # ch0 = np.zeros_like(gt)[gt == 0] = 1
-        # ch1 = np.zeros_like(gt)[gt == 1] = 1
-        # ch2 = np.zeros_like(gt)[gt == 2] = 1
-        # ch3 = np.zeros_like(gt)[gt == 3] = 1
-
-        # out = torch.cat(ch0, ch1, ch2, ch3)
-        # print(np.shape(out))
-
-        # convert ground truth [1, 1, height, width] to [1, 4, height, width]
-
-        # zero out non LV pixels
-
-
-
         return {'scan': torch.from_numpy(scan.astype(np.float32)).unsqueeze(0),
                   'gt': torch.from_numpy(gt.astype(np.float32))}
-                # 'gt': torch.from_numpy(gt.astype(np.float32)).unsqueeze(0)}

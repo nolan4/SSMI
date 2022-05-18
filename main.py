@@ -87,9 +87,9 @@ def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=
             Y = data['gt']
             YM = data['gt_masks']
 
-            print('scan', X.size())
-            print('gt', Y.size())
-            print('gt_masks', YM.size())
+            # print('scan', X.size())
+            # print('gt', Y.size())
+            # print('gt_masks', YM.size())
 
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -103,12 +103,6 @@ def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=
 
             # forward + backward + optimize
             outputs = unet_model(inputs)
-            
-            print('outputs: \n')
-            print(outputs.shape)
-            
-            print('gt: \n')
-            print(gt.shape)
 
             loss = criterion(outputs, gt.long())
             loss.backward()
@@ -116,7 +110,7 @@ def train(model=unet_model, criterion=criterion, optimizer=optimizer, scheduler=
 
             # print statistics
             running_loss += loss.item()
-            if iter % 100 == 0:
+            if iter % 3 == 0:
                 print("epoch{}, iter{}, loss: {}".format(epoch, iter, loss.item()))
 
     print('Finished Training')
