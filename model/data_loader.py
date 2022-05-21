@@ -30,10 +30,11 @@ Label = namedtuple( 'Label' , [
 
 label_mappings = [
     #       name                     level3Id  color
-    Label(  'background'        ,    0  , (128, 64,128)  ),
-    Label(  'left ventricle'    ,    1  , ( 81,  0, 81)  ),
-    Label(  'myocardium'        ,    2  , (244, 35,232)  ),
-    Label(  'left atrium'       ,    3  , (152,251,152)  ),
+    Label(  'background'        ,    0  ,  (  0,  0,  0)   ),
+    Label(  'left ventricle'    ,    1  ,  ( 81,  0, 81)   ),
+    Label(  'myocardium'        ,    2  ,  (244, 35,232)   ),
+    Label(  'left atrium'       ,    3  ,  (152,251,152)   ),
+    # Label(  'unlabeled'         ,    4  ,  ((255,255,255)) ),
 ]
 
 
@@ -43,6 +44,7 @@ class SSEchoDataset(Dataset):
 
         print('calling SSECHODataset class ...')
 
+        # self.num_class = 5
         self.num_class = 4
         self.dataset_path = dataset_path + TestTrain + '/'
         self.transform = transforms.Compose([ZPCC((300, 200)), ToTensor()])
