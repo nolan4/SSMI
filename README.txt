@@ -1,4 +1,14 @@
-Steps for running this code:
+>>> Steps for downloading dataset:
+
+1. Go to https://www.creatis.insa-lyon.fr/Challenge/camus/index.html
+
+2. Navigate to the "Datasets" tab, and click the think "online evaluation website"
+
+3. Make an account and download the CAMUS training and testing datasets
+
+
+
+>>> Steps for running this code:
 
 1. Open main.py and change dataset_path to point to a folder that contains "training" and "testing" folders that have the same structure as the CAMUS dataset.
 
