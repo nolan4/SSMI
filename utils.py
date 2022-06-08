@@ -10,9 +10,11 @@ N samples pred size: N x C x H x W
 Returns (list of intersections per class, list of unions per class)
 
 """
+
+# calculate the intersection over union
 def iou(pred, gt_masks):
 
-    print('pred shape', pred.shape)
+    # print('pred shape', pred.shape)
     ious = []
     num_class = len(gt_masks[0])
 
@@ -25,10 +27,10 @@ def iou(pred, gt_masks):
     else:
         one_hot_pred = one_hot_encode(pred)
 
-    # for cls in range(n_class - 1): # Leave out Unlabeled class
+#     for cls in range(n_class - 1): # Leave out Unlabeled class
 
     # for each class, get a binary matrix
-    for cls in range(num_class): # no "unlabeled" class
+    for cls in range(num_class): # no "unlabeled" class (there are 4 channels and 4 labels)
         if use_gpu:
             c = torch.tensor([cls]).cuda()
         else:
@@ -40,23 +42,19 @@ def iou(pred, gt_masks):
         p = torch.index_select(one_hot_pred, 1, c)
         t = torch.index_select(gt_masks, 1, c)
 
-        # print('p', p)
-        # print('t', t)
-
-
         # Should be of shape N x 1 x H x W
-        print('p shape:', p.shape)
-        print('t shape:', t.shape)
+        # print('p shape:', p.shape)
+        # print('t shape:', t.shape)
 
         # find intersection and union for each of the N pred/gt maps
-        intersection = torch.sum(torch.logical_and(p, t))# intersection calculation
-        union = torch.sum(torch.logical_or(p, t))#Union calculation
-        if union == 0:
-            ious.append(float('nan'))  # if there is no ground truth, do not include in evaluation
-        else:
-            # Append the calculated IoU to the list ious
-            unions.append(union)
-            intersections.append(intersection)
+        intersection = torch.sum(torch.logical_and(p, t)) # intersection calculation
+        union = torch.sum(torch.logical_or(p, t)) # Union calculation
+#         if union == 0:
+#             ious.append(float('nan')) # if there is no ground truth, do not include in evaluation
+#         else:
+        # Append the calculated IoU to the list ious
+        unions.append(union)
+        intersections.append(intersection)
     return torch.tensor(intersections), torch.tensor(unions)
 
 

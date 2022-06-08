@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import SimpleITK
 from regex import W
 
+from scipy import ndimage
+
 # import rawpy
 # import PIL as Image
 import torch
@@ -28,13 +30,15 @@ Label = namedtuple( 'Label' , [
     'color'       , 
     ] )
 
+
 label_mappings = [
-    #       name                     level3Id  color
-    Label(  'background'        ,    0  ,  (  0,  0,  0)   ),
-    Label(  'left ventricle'    ,    1  ,  ( 81,  0, 81)   ),
-    Label(  'myocardium'        ,    2  ,  (244, 35,232)   ),
-    Label(  'left atrium'       ,    3  ,  (152,251,152)   ),
-    # Label(  'unlabeled'         ,    4  ,  ((255,255,255)) ),
+
+    # labels are correct. 255 is dark, 1 is light. dont use 0
+    Label(  'background'        ,    0  ,  (  55,  55,  55)   ),
+    Label(  'left ventricle'    ,    1  ,  ( 225,  225, 225)   ), 
+    Label(  'myocardium'        ,    2  ,  (175, 175, 175)   ),
+    Label(  'left atrium'       ,    3  ,  (1, 1, 1)   ),
+    
 ]
 
 
@@ -44,12 +48,11 @@ class SSEchoDataset(Dataset):
 
         print('calling SSECHODataset class ...')
 
-        # self.num_class = 5
         self.num_class = 4
         self.dataset_path = dataset_path + TestTrain + '/'
-        self.transform = transforms.Compose([ZPCC((300, 200)), ToTensor()])
-        
-        patient_paths = Path(self.dataset_path).glob('patient*')
+        self.transform = transforms.Compose([ZPCC((800, 600)), DSCALE(2), ToTensor()])
+       
+        patient_paths = sorted(Path(self.dataset_path).glob('patient*'))
         self.data_paths = self.process_paths(patient_paths, TestTrain, ImQ, Chambers, SysDia)
 
     def __len__(self):
@@ -91,7 +94,7 @@ class SSEchoDataset(Dataset):
                         gt_path = str(f) + '/' + patient_id + '_' + c + 'CH_' + sd + '_gt.mhd'
                         out_paths.append([scan_path, gt_path])
                     elif TestTrain == 'testing':
-                        out_paths.append(scan_path)
+                        out_paths.append([scan_path])
                     else:
                         raise Exception('TrainTest string must be "testing" or "training"')
    
@@ -104,14 +107,16 @@ class SSEchoDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
             
+            
         scan_path = self.data_paths[idx][0]
         gt_path = self.data_paths[idx][1]
-        
+
+
         scan = SimpleITK.GetArrayFromImage(SimpleITK.ReadImage(scan_path))[0]
         gt = SimpleITK.GetArrayFromImage(SimpleITK.ReadImage(gt_path))[0]
-                
+
         sample = {'scan': scan, 'gt': gt}
-        
+
         # perform predefined transformations on scan and gt
         if self.transform:
             sample = self.transform(sample)
@@ -124,6 +129,7 @@ class SSEchoDataset(Dataset):
             gt_masks[c][gt == c] = 1
 
         sample['gt_masks'] = gt_masks
+         
 
         return sample
 
@@ -159,6 +165,19 @@ class ZPCC(object):
 
         return {'scan': CC_scan, 'gt': CC_gt}
     
+    
+class DSCALE(object):
+    
+    """
+    downsample the images to save on memory
+    """
+    def __init__(self, scale_factor):
+        self.scale_factor = scale_factor
+        
+    def __call__(self, sample):        
+        scan, gt = sample['scan'], sample['gt']
+        return {'scan': scan[::self.scale_factor, ::self.scale_factor], 'gt': gt[::self.scale_factor, ::self.scale_factor]}
+        
     
     
 # for converting images into tensors  
