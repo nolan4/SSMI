@@ -1,4 +1,7 @@
+SSMI - Semantic Segmentation of Medical Images:
+
 This code implements a modified U-Net architecture to perform semantic segmentation of ultrasound scans of the heart. The class labels are 0 - background, 1 - left ventricle, 2 - myocardium, and 3 - left atrium.
+
 
 
 >>> Steps for downloading dataset:
